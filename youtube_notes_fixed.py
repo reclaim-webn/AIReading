@@ -8,6 +8,7 @@ import os
 import re
 import sys
 import datetime
+import traceback
 from urllib.parse import urlparse, parse_qs
 import requests
 import json
@@ -42,13 +43,20 @@ def get_video_info(url):
     """Get information about a YouTube video"""
     try:
         video_id = extract_video_id(url)
+        print(f"Extracted video ID: {video_id}")
+        
         try:
+            print(f"Attempting to connect to YouTube for video: {video_id}")
             yt = YouTube(f"https://www.youtube.com/watch?v={video_id}")
+            print(f"Successfully connected to YouTube")
         except Exception as e:
             print(f"YouTube connection error: {e}")
             print("This may be due to YouTube blocking automated requests or pytube needing an update.")
+            print("Full traceback:")
+            traceback.print_exc()
             return None
         
+        print("Extracting basic video information...")
         # Basic video information
         info = {
             'title': yt.title,
@@ -61,9 +69,11 @@ def get_video_info(url):
             'duration': str(datetime.timedelta(seconds=yt.length)),
             'capture_date': datetime.datetime.now().strftime('%Y-%m-%d'),
         }
+        print(f"Successfully extracted basic information: Title={info['title']}, Channel={info['channel_name']}")
         
         # Try to get additional information that may not always be available
         try:
+            print("Extracting additional information...")
             # Get subscriber count - this requires additional API access
             info['channel_subscribers'] = 'Unknown'  # Requires YouTube API with keys
             
@@ -75,12 +85,16 @@ def get_video_info(url):
             info['likes'] = 'Unknown'  # Requires YouTube API
             info['comments'] = 'Unknown'  # Requires YouTube API
             info['category'] = 'Unknown'  # Requires YouTube API
+            print("Additional information extracted")
         except Exception as e:
             print(f"Warning: Could not get all extended information: {e}")
+            traceback.print_exc()
         
         return info
     except Exception as e:
         print(f"Error getting video info: {e}")
+        print("Full traceback:")
+        traceback.print_exc()
         return None
 
 def format_for_markdown(video_info):
@@ -88,6 +102,7 @@ def format_for_markdown(video_info):
     if not video_info:
         return None
     
+    print("Formatting video information for markdown...")
     template = f"""# [{video_info['title']}]
 
 <div style="display:flex">
@@ -124,15 +139,19 @@ def format_for_markdown(video_info):
 
 ---
 """
+    print("Markdown formatting complete")
     return template
 
 def append_to_notes(markdown_content, filename="AINotesDump.md"):
     """Append markdown content to the notes file"""
     try:
+        print(f"Attempting to write to {filename}...")
         # Create the file if it doesn't exist
         if not os.path.exists(filename):
+            print(f"File {filename} does not exist, creating it...")
             with open(filename, 'w', encoding='utf-8') as f:
                 f.write("")
+            print("File created")
         
         # Append content to the file
         with open(filename, 'a', encoding='utf-8') as f:
@@ -142,6 +161,7 @@ def append_to_notes(markdown_content, filename="AINotesDump.md"):
         return True
     except Exception as e:
         print(f"Error writing to file: {e}")
+        traceback.print_exc()
         return False
 
 def main():
