@@ -38,6 +38,7 @@
 
 ## Development Environment
 
+- The shell environment is Zsh (NOT PowerShell) - all commands must use Zsh syntax
 - Virtual environment has been created and must be activated with `source venv/bin/activate` before any commands
 - ALL package installations and script executions MUST be done within this virtual environment
 - Required packages should be documented in requirements.txt
