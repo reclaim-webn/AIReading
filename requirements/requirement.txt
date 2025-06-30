@@ -1,0 +1,28 @@
+I am not clear about how clear the requirements have to be. 
+At the moment it might look like a Smart Browsing, to make notes of the Videos and articles about AI
+
+
+Everytime I give a youtube link append it into the file AINotesDump.md, please capture following of the video's:
+
+1. Image
+2. Description
+3. Link to Description
+4. The date it was published in Youtube. The date you and I capturing it into the AINotesDump.md file
+5. Views it has.
+6. thumbs up it has got.
+7. Title
+8. Hash tags
+
+
+Would you suggest a few more points? Upto 5 such points.
+
+Sort them with the most logical way 
+
+I am expecting the AINotesDump.MD to have a mix of one column and two columnar with image on the left and other facts on the right column
+
+
+Cursor agent, if you can do the job for me, I would not need any code at the moment.
+Make this as the current rule for this project.
+
+pytube>=15.0.0
+requests>=2.28.0
