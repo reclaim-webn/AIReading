@@ -19,6 +19,16 @@
 
 7. **Document progress** with iteration numbers in commit messages.
 
+## Critical Process Enforcement
+
+1. **NO EXCEPTIONS** to the established process - follow every step in order
+2. **Always run first** to observe actual errors before proposing changes
+3. **Share error outputs** with the user before suggesting modifications
+4. **Never implement changes** without explicit user approval
+5. **Propose specific changes** based on observed errors only
+6. **Wait for approval** after providing commit messages
+7. **No assumptions** about what might be causing errors without evidence
+
 ## Development Environment
 
 - Virtual environment has been created and activated with `source venv/bin/activate`
