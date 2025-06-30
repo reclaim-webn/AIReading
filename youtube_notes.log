@@ -1,0 +1,52 @@
+2025-06-30 18:32:58,375 - INFO - Starting script execution
+2025-06-30 18:32:58,448 - INFO - Successfully imported pytube
+2025-06-30 18:32:58,449 - INFO - === Starting YouTube Notes Generator ===
+2025-06-30 18:32:58,449 - INFO - URL provided as command line argument: https://www.youtube.com/watch?v=qWm8yJ_mDAs
+2025-06-30 18:32:58,449 - INFO - Processing video: https://www.youtube.com/watch?v=qWm8yJ_mDAs
+2025-06-30 18:32:58,449 - INFO - Extracting video ID from URL: https://www.youtube.com/watch?v=qWm8yJ_mDAs
+2025-06-30 18:32:58,449 - INFO - Extracted video ID (youtube.com/watch format): qWm8yJ_mDAs
+2025-06-30 18:32:58,449 - INFO - Getting information for video ID: qWm8yJ_mDAs
+2025-06-30 18:32:58,450 - INFO - Creating YouTube object for video ID: qWm8yJ_mDAs
+2025-06-30 18:32:58,450 - DEBUG - matched regex search: (?:v=|\/)([0-9A-Za-z_-]{11}).*
+2025-06-30 18:32:58,450 - INFO - Successfully created YouTube object
+2025-06-30 18:32:58,450 - INFO - Extracting basic video information
+2025-06-30 18:32:59,302 - ERROR - Error getting video info: HTTP Error 400: Bad Request
+2025-06-30 18:32:59,302 - ERROR - Exception: HTTP Error 400: Bad Request
+2025-06-30 18:32:59,311 - ERROR - Traceback (most recent call last):
+  File "/Users/bhaskarb/Desktop/Softwares/Dev/ShLearning/AIReading/youtube_notes_fixed.py", line 98, in get_video_info
+    'title': yt.title,
+             ^^^^^^^^
+  File "/Users/bhaskarb/Desktop/Softwares/Dev/ShLearning/AIReading/venv/lib/python3.13/site-packages/pytube/__main__.py", line 341, in title
+    self._title = self.vid_info['videoDetails']['title']
+                  ^^^^^^^^^^^^^
+  File "/Users/bhaskarb/Desktop/Softwares/Dev/ShLearning/AIReading/venv/lib/python3.13/site-packages/pytube/__main__.py", line 246, in vid_info
+    innertube_response = innertube.player(self.video_id)
+  File "/Users/bhaskarb/Desktop/Softwares/Dev/ShLearning/AIReading/venv/lib/python3.13/site-packages/pytube/innertube.py", line 448, in player
+    return self._call_api(endpoint, query, self.base_data)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/bhaskarb/Desktop/Softwares/Dev/ShLearning/AIReading/venv/lib/python3.13/site-packages/pytube/innertube.py", line 390, in _call_api
+    response = request._execute_request(
+        endpoint_url,
+    ...<2 lines>...
+        data=data
+    )
+  File "/Users/bhaskarb/Desktop/Softwares/Dev/ShLearning/AIReading/venv/lib/python3.13/site-packages/pytube/request.py", line 37, in _execute_request
+    return urlopen(request, timeout=timeout)  # nosec
+  File "/usr/local/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/urllib/request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/urllib/request.py", line 495, in open
+    response = meth(req, response)
+  File "/usr/local/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/urllib/request.py", line 604, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "/usr/local/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/urllib/request.py", line 533, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/local/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/urllib/request.py", line 466, in _call_chain
+    result = func(*args)
+  File "/usr/local/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/urllib/request.py", line 613, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 400: Bad Request
+
+2025-06-30 18:32:59,312 - ERROR - Failed to get video information

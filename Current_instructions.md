@@ -3,13 +3,17 @@
 ## Iterative Development Process
 
 1. **ALWAYS activate the virtual environment first**:
-   ```bash
-   source venv/bin/activate
+   ```powershell
+   # For use in Cursor's PowerShell interface:
+   . ./venv/bin/activate
+   
+   # For reference - what would be used in user's actual Zsh shell:
+   # source venv/bin/activate
    ```
    The terminal prompt should show "(venv)" indicating the virtual environment is active.
 
 2. **Run the script** continuously until all issues are fixed:
-   ```bash
+   ```powershell
    python youtube_notes_fixed.py "https://www.youtube.com/watch?v=qWm8yJ_mDAs"
    ```
 
@@ -38,15 +42,17 @@
 
 ## Development Environment
 
-- The shell environment is Zsh (NOT PowerShell) - all commands must use Zsh syntax
-- Virtual environment has been created and must be activated with `source venv/bin/activate` before any commands
+- **IMPORTANT NOTE TO SELF:** While user's system is macOS with Zsh shell, the Cursor terminal interface appears to be using PowerShell syntax
+- When using Cursor terminal, use PowerShell syntax: `. ./venv/bin/activate` 
+- When providing commands for user to run in their actual terminal, use Mac/Zsh syntax: `source venv/bin/activate`
+- Virtual environment must be activated before any Python commands
 - ALL package installations and script executions MUST be done within this virtual environment
 - Required packages should be documented in requirements.txt
-- Verify the "(venv)" indicator appears in the terminal prompt before running any commands
+- If terminal interface issues persist, provide commands for user to run in their actual terminal
 
 ## Testing Approach
 
-1. Activate virtual environment
+1. Activate virtual environment using appropriate shell syntax
 2. Run script with the test video URL
 3. Analyze any errors or issues encountered
 4. Make minimal necessary changes to fix specific issues
