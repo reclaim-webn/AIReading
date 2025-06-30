@@ -7,14 +7,12 @@ This script extracts information from YouTube videos and appends it to AINotesDu
 import os
 import re
 import sys
-import time
+import json
 import datetime
 import traceback
 import logging
-import random
+import subprocess
 from urllib.parse import urlparse, parse_qs
-import requests
-import json
 
 # Set up logging to file
 logging.basicConfig(
@@ -34,39 +32,24 @@ def log_exception(e):
     logging.error(f"Exception: {str(e)}")
     logging.error(traceback.format_exc())
 
-# Try different user agents to avoid blocking
-USER_AGENTS = [
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6324.211 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6324.211 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6324.211 Safari/537.36'
-]
-
-try:
-    logging.info("Starting script execution")
-    # First make sure we have the latest pytube
+def ensure_dependencies():
+    """Ensure all required dependencies are installed"""
     try:
-        import subprocess
-        logging.info("Updating pytube to latest version")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "pytube"])
-        logging.info("Successfully updated pytube")
+        logging.info("Checking for required dependencies")
+        try:
+            import yt_dlp
+            logging.info("yt-dlp already installed")
+        except ImportError:
+            logging.info("Installing yt-dlp")
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "yt-dlp"])
+            logging.info("Successfully installed yt-dlp")
+            import yt_dlp
+        
+        return True
     except Exception as e:
-        logging.warning(f"Could not update pytube: {e}")
+        logging.error(f"Failed to install dependencies: {e}")
         log_exception(e)
-    
-    from pytube import YouTube
-    logging.info("Successfully imported pytube")
-except ImportError:
-    logging.error("Failed to import pytube, attempting to install")
-    try:
-        import subprocess
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "pytube"])
-        from pytube import YouTube
-        logging.info("Successfully installed and imported pytube")
-    except Exception as e:
-        logging.error("Failed to install pytube")
-        log_exception(e)
-        sys.exit(1)
+        return False
 
 def extract_video_id(url):
     """Extract the video ID from a YouTube URL"""
@@ -96,134 +79,76 @@ def extract_video_id(url):
     logging.warning(f"Could not extract video ID, using URL as is: {url}")
     return url
 
-def fallback_video_info(video_id):
-    """Try to get video information using requests and parsing the page directly"""
-    logging.info(f"Attempting fallback method to get video info for {video_id}")
-    
+def get_video_info(url):
+    """Get information about a YouTube video using yt-dlp"""
     try:
-        # Choose a random user agent
-        user_agent = random.choice(USER_AGENTS)
-        headers = {'User-Agent': user_agent}
+        import yt_dlp
         
-        # Try to fetch the video page
-        url = f"https://www.youtube.com/watch?v={video_id}"
-        response = requests.get(url, headers=headers)
-        
-        if response.status_code != 200:
-            logging.error(f"Fallback method failed with status code {response.status_code}")
-            return None
-        
-        # Try to extract title from HTML
-        html = response.text
-        title_match = re.search(r'<title>(.*?) - YouTube</title>', html)
-        title = title_match.group(1) if title_match else f"YouTube Video {video_id}"
-        
-        # Extract basic info
-        info = {
-            'title': title,
-            'channel_name': 'Unknown (Fallback Method)',
-            'thumbnail_url': f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg",
-            'description': 'Description unavailable due to API restrictions',
-            'publish_date': 'Unknown',
-            'views': 'Unknown',
-            'video_id': video_id,
-            'duration': 'Unknown',
-            'capture_date': datetime.datetime.now().strftime('%Y-%m-%d'),
-            'hashtags': 'None',
-            'channel_subscribers': 'Unknown',
-            'likes': 'Unknown',
-            'comments': 'Unknown',
-            'category': 'Unknown'
-        }
-        
-        logging.info(f"Successfully retrieved basic info using fallback method: {title}")
-        return info
-    except Exception as e:
-        logging.error(f"Error in fallback method: {e}")
-        log_exception(e)
-        return None
-
-def get_video_info(url, max_retries=3):
-    """Get information about a YouTube video"""
-    try:
         video_id = extract_video_id(url)
         logging.info(f"Getting information for video ID: {video_id}")
         
-        # Try with pytube multiple times with different user agents
-        for attempt in range(max_retries):
-            try:
-                # Set a different user agent for each attempt
-                user_agent = random.choice(USER_AGENTS)
-                logging.info(f"Attempt {attempt+1}/{max_retries} with User-Agent: {user_agent}")
-                
-                # Create YouTube object with the selected user agent
-                logging.info(f"Creating YouTube object for video ID: {video_id}")
-                yt = YouTube(
-                    f"https://www.youtube.com/watch?v={video_id}",
-                    use_oauth=False,
-                    allow_oauth_cache=False,
-                    on_progress_callback=None
-                )
-                # Set user agent
-                yt.headers = {'User-Agent': user_agent}
-                
-                logging.info(f"Successfully created YouTube object")
-                
-                # Basic video information
-                logging.info("Extracting basic video information")
-                info = {
-                    'title': yt.title,
-                    'channel_name': yt.author,
-                    'thumbnail_url': f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg",
-                    'description': yt.description[:500] + "..." if len(yt.description) > 500 else yt.description,  # Truncate long descriptions in log
-                    'publish_date': yt.publish_date.strftime('%Y-%m-%d') if yt.publish_date else 'Unknown',
-                    'views': f"{yt.views:,}",
-                    'video_id': video_id,
-                    'duration': str(datetime.timedelta(seconds=yt.length)),
-                    'capture_date': datetime.datetime.now().strftime('%Y-%m-%d'),
-                }
-                logging.info(f"Successfully extracted basic information: Title={info['title']}, Channel={info['channel_name']}")
-                
-                # Try to get additional information that may not always be available
-                try:
-                    logging.info("Extracting additional information")
-                    # Get subscriber count - this requires additional API access
-                    info['channel_subscribers'] = 'Unknown'  # Requires YouTube API with keys
-                    
-                    # Extract hashtags from description
-                    hashtags = re.findall(r'#\w+', yt.description)
-                    info['hashtags'] = ' '.join(hashtags) if hashtags else 'None'
-                    logging.info(f"Found {len(hashtags)} hashtags")
-                    
-                    # This requires YouTube API with keys for accurate data
-                    info['likes'] = 'Unknown'  # Requires YouTube API
-                    info['comments'] = 'Unknown'  # Requires YouTube API
-                    info['category'] = 'Unknown'  # Requires YouTube API
-                    logging.info("Successfully extracted additional information")
-                except Exception as e:
-                    logging.warning(f"Could not get all extended information: {e}")
-                    log_exception(e)
-                
-                return info
-                
-            except Exception as e:
-                logging.warning(f"Attempt {attempt+1} failed: {e}")
-                log_exception(e)
-                
-                # Wait before trying again, with increasing delay
-                if attempt < max_retries - 1:
-                    delay = (attempt + 1) * 2
-                    logging.info(f"Waiting {delay} seconds before retrying...")
-                    time.sleep(delay)
+        # Configure yt-dlp
+        ydl_opts = {
+            'format': 'best',
+            'quiet': True,
+            'no_warnings': True,
+            'skip_download': True,  # We don't want to download the video, just get info
+            'ignoreerrors': True,
+        }
         
-        # If pytube fails after all retries, try fallback method
-        logging.warning("All pytube attempts failed, trying fallback method")
-        fallback_info = fallback_video_info(video_id)
-        if fallback_info:
-            return fallback_info
+        # Extract video information
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            logging.info("Extracting video information with yt-dlp")
+            video_info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
             
-        logging.error("Both pytube and fallback methods failed")
-        return None
+            if not video_info:
+                logging.error("yt-dlp couldn't extract video information")
+                return None
+            
+            logging.info(f"Successfully extracted video information: {video_info.get('title')}")
+            
+            # Format duration
+            duration_seconds = video_info.get('duration')
+            if duration_seconds:
+                duration = str(datetime.timedelta(seconds=duration_seconds))
+            else:
+                duration = "Unknown"
+                
+            # Extract hashtags
+            description = video_info.get('description', '')
+            hashtags = re.findall(r'#\w+', description)
+            hashtags_str = ' '.join(hashtags) if hashtags else 'None'
+            
+            # Create info dictionary
+            info = {
+                'title': video_info.get('title', f"YouTube Video {video_id}"),
+                'channel_name': video_info.get('uploader', 'Unknown'),
+                'channel_url': video_info.get('uploader_url', ''),
+                'thumbnail_url': video_info.get('thumbnail', f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"),
+                'description': description,
+                'publish_date': video_info.get('upload_date', 'Unknown'),
+                'views': f"{video_info.get('view_count', 0):,}",
+                'video_id': video_id,
+                'duration': duration,
+                'capture_date': datetime.datetime.now().strftime('%Y-%m-%d'),
+                'hashtags': hashtags_str,
+                'channel_subscribers': video_info.get('channel_follower_count', 'Unknown'),
+                'likes': f"{video_info.get('like_count', 0):,}" if video_info.get('like_count') else 'Unknown',
+                'comments': f"{video_info.get('comment_count', 0):,}" if video_info.get('comment_count') else 'Unknown',
+                'category': video_info.get('categories', ['Unknown'])[0] if video_info.get('categories') else 'Unknown'
+            }
+            
+            # Format publish date to be more readable if it's in YYYYMMDD format
+            if len(info['publish_date']) == 8 and info['publish_date'].isdigit():
+                try:
+                    publish_date = datetime.datetime.strptime(info['publish_date'], '%Y%m%d')
+                    info['publish_date'] = publish_date.strftime('%Y-%m-%d')
+                except Exception:
+                    pass  # Keep original format if parsing fails
+                    
+            logging.info(f"Processed video information: Title={info['title']}, Channel={info['channel_name']}")
+            return info
+            
     except Exception as e:
         logging.error(f"Error getting video info: {e}")
         log_exception(e)
@@ -236,6 +161,17 @@ def format_for_markdown(video_info):
         return None
     
     logging.info("Formatting video information for markdown")
+    
+    # Truncate description if too long
+    description = video_info['description']
+    if len(description) > 2000:
+        description = description[:1997] + "..."
+    
+    # Build channel name with link if available
+    channel_display = video_info['channel_name']
+    if video_info.get('channel_url'):
+        channel_display = f"[{video_info['channel_name']}]({video_info['channel_url']})"
+    
     template = f"""# [{video_info['title']}]
 
 <div style="display:flex">
@@ -245,7 +181,7 @@ def format_for_markdown(video_info):
 <div style="flex:60%">
 
 ## Quick Facts
-- **Channel:** {video_info['channel_name']} (Subscribers: {video_info.get('channel_subscribers', 'Unknown')})
+- **Channel:** {channel_display} (Subscribers: {video_info.get('channel_subscribers', 'Unknown')})
 - **Published:** {video_info['publish_date']}
 - **Captured:** {video_info['capture_date']}
 - **Duration:** {video_info['duration']}
@@ -259,7 +195,7 @@ def format_for_markdown(video_info):
 </div>
 
 ## Description
-{video_info['description']}
+{description}
 
 ## Hashtags
 {video_info.get('hashtags', 'None')}
@@ -299,6 +235,12 @@ def append_to_notes(markdown_content, filename="AINotesDump.md"):
 
 def main():
     logging.info("=== Starting YouTube Notes Generator ===")
+    
+    # Ensure dependencies are installed
+    if not ensure_dependencies():
+        logging.error("Failed to install required dependencies")
+        return
+    
     # Get YouTube URL from command line or input
     if len(sys.argv) > 1:
         url = sys.argv[1]
